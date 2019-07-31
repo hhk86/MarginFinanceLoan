@@ -1,12 +1,9 @@
 import cx_Oracle
 import numpy as np
 import pandas as pd
-import datetime as dt
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
 import sys
-import time
+
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -171,9 +168,6 @@ def calMarginLoanParam(date: str, include688=False) -> dict:
     tradingDay_list = getTradingDays("20120101", "20191231")
     date_lag1 = tradingDay_list[tradingDay_list.index(date) - 1]
     print(date, date_lag1)
-    # if date == "20190722":
-    #     marginLoan = mannuallyGetMarginLoan()
-    # else:
     marginLoan = getMarginLoan(date)
     marginLoan_lag1 = getMarginLoan(date_lag1)
     marginLoan = pd.merge(marginLoan, marginLoan_lag1, left_index=True, right_index=True, how="left")
@@ -266,6 +260,9 @@ def getMarginLoan(date: str) -> pd.DataFrame:
         marginData = oracle.query(sql)
     marginData = lowCaseDfColumns(marginData)
     marginData.fillna(0, inplace=True)
+    if len(marginData) == 0:
+        print("No Oracle data available on " + date + "!!!\nUse web data instead!")
+        return mannuallyGetMarginLoan(date)
     marginData.set_index("s_info_windcode", inplace=True)
     marginData.columns = ["trade_dt", "sell", "endVol", "balance", "repay"]
     marginData.endVol /= 10000
@@ -328,13 +325,18 @@ def getStockName() -> pd.DataFrame:
     return stockName_df
 
 
-def mannuallyGetMarginLoan() -> pd.DataFrame:
-    '''Special cases'''
-    marginLoan = pd.read_excel("20190722.xlsx", converters={'证券代码': str})
+def mannuallyGetMarginLoan(date) -> pd.DataFrame:
+    '''
+    When the SQL database is not updated, manually paste the Margin Finance Loan data into excel for analysis.
+    Notice that we should paste the head line into the excel because the code need the head title for data type.
+
+    '''
+    marginLoan = pd.read_excel(date + ".xlsx", converters={'证券代码': str})
     marginLoan.columns = [0, 1, 2, 3, 4, 5, 6]
     marginLoan = marginLoan[[1, 3, 4, 5, 6]]
     marginLoan.replace('-', 0, inplace=True)
     marginLoan.columns = ["code_short", "startVol", "sell", "endVol", "balance"]
+    marginLoan.code_short = ['0' * (6 - len(str(code))) + code for code in list(marginLoan.code_short)]
     NameAndCode = getStockName()
     NameAndCode["S_INFO_WINDCODE"] = NameAndCode.index
     NameAndCode["code_short"] = NameAndCode["S_INFO_WINDCODE"].apply(first6Letters)
@@ -351,9 +353,8 @@ def first6Letters(s: str) -> str:
     return s[:6]
 
 
-#
 if __name__ == '__main__':
-    param_dict = calMarginLoanParam("20190725")
+    param_dict = calMarginLoanParam("20190729")
     app = QApplication(sys.argv)
     myTable = App(param_dict)
     myTable.show()
