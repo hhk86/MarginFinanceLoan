@@ -354,7 +354,7 @@ def first6Letters(s: str) -> str:
 
 
 if __name__ == '__main__':
-    param_dict = calMarginLoanParam("20190729")
+    param_dict = calMarginLoanParam("20190731")
     app = QApplication(sys.argv)
     myTable = App(param_dict)
     myTable.show()
