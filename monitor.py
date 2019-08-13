@@ -5,10 +5,6 @@ from PyQt5.QtWidgets import *
 import sys
 
 
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
-
-
 class OracleSql(object):
     '''
     Query data from database
@@ -77,28 +73,38 @@ class App(QWidget):
         self.marginGroup = param_dict["size"]
         self.marginSorted = param_dict["change"]
         self.title = '转融通分析' + "        日期：" + self.date
+        self.kechuang = param_dict["688"]
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        self.createGroupTable()
         self.layout = QVBoxLayout()
-        self.layout.addWidget(self.groupTable)
-        self.VBoxGroup = QTableWidget()
-        self.layout.addWidget(self.VBoxGroup)
         self.setLayout(self.layout)
-        self.layout.setStretchFactor(self.VBoxGroup, 3)
 
+
+        self.createGroupTable()
+        self.layout.addWidget(self.groupTable)
+
+
+        self.HGroup = QTableWidget()
+        self.layout.addWidget(self.HGroup)
         self.layout2 = QHBoxLayout()
+        self.HGroup.setLayout(self.layout2)
         self.createSortTable()
         self.layout2.addWidget(self.sortTable)
-        self.VBoxGroup.setLayout(self.layout2)
-
         self.createSortTable2()
         self.layout2.addWidget(self.sortTable2)
-        self.VBoxGroup.setLayout(self.layout2)
+
+
+
+        self.createLabel()
+        self.layout.addWidget(self.label)
+
+
+        self.layout.setStretchFactor(self.HGroup, 3)
+
 
         self.show()
 
@@ -137,6 +143,10 @@ class App(QWidget):
                 self.sortTable2.setItem(i, j, QTableWidgetItem(self.marginSorted.iloc[i, j]))
         self.sortTable2.setHorizontalHeaderLabels(["股票名称", "股票代码", "变化量(万股)", "期末余量（万股）", "分类"])
         self.sortTable2.setVerticalHeaderLabels(["变化量排名" + str(i) for i in range(1, 11)])
+
+    def createLabel(self):
+        self.label = QLabel()
+        self.label.setText("科创板转融通总量:" + str(int(self.kechuang)) + "万元")
 
 
 def lowCaseDfColumns(df: pd.DataFrame) -> pd.DataFrame:
@@ -183,6 +193,8 @@ def calMarginLoanParam(date: str, include688=False) -> dict:
     marginLoan["change_balance"] = marginLoan["endBalance"].squeeze().sub(marginLoan["startBalance"].squeeze())
     if include688 is False:
         no688_list = [not a.startswith("688") for a in marginLoan.index]
+        true_688_list = [a.startswith("688") for a in marginLoan.index]
+        loan688 = marginLoan.loc[true_688_list, :]
         marginLoan = marginLoan.loc[no688_list, :]
     HS_list = getIndexConstituent(date, index="HS")
     CSI_list = getIndexConstituent(date, index="CSI")
@@ -208,7 +220,7 @@ def calMarginLoanParam(date: str, include688=False) -> dict:
     marginSorted.columns = ["endVol", "change", "group", "stockName", "code"]
     marginSorted = marginSorted[["stockName", "code", "change", "endVol", "group"]]
     marginSorted = dfItemToStr(marginSorted)
-    param_dict = {"size": marginGroup, "change": marginSorted, "date": date}
+    param_dict = {"size": marginGroup, "change": marginSorted, "date": date, "688": loan688.endBalance.sum()}
     return param_dict
 
 
@@ -354,7 +366,7 @@ def first6Letters(s: str) -> str:
 
 
 if __name__ == '__main__':
-    param_dict = calMarginLoanParam("20190731")
+    param_dict = calMarginLoanParam("20190812")
     app = QApplication(sys.argv)
     myTable = App(param_dict)
     myTable.show()
