@@ -94,8 +94,8 @@ class App(QWidget):
         self.HGroup.setLayout(self.layout2)
         self.createSortTable()
         self.layout2.addWidget(self.sortTable)
-        self.createSortTable2()
-        self.layout2.addWidget(self.sortTable2)
+        # self.createSortTable2()
+        # self.layout2.addWidget(self.sortTable2)
 
 
 
@@ -130,8 +130,8 @@ class App(QWidget):
         for i in range(0, 10):
             for j in range(0, 5):
                 self.sortTable.setItem(i, j, QTableWidgetItem(self.marginSorted.iloc[- i - 1, j]))
-        self.sortTable.setHorizontalHeaderLabels(["股票名称", "股票代码", "变化量(万股)", "期末余量（万股）", "分类"])
-        self.sortTable.setVerticalHeaderLabels(["变化量排名" + str(i) for i in range(1, 11)])
+        self.sortTable.setHorizontalHeaderLabels(["股票名称", "股票代码", "变化量(万元)", "期末余量（万元）", "分类"])
+        self.sortTable.setVerticalHeaderLabels(["期末余量排名" + str(i) for i in range(1, 11)])
 
     def createSortTable2(self):
         self.sortTable2 = QTableWidget()
@@ -146,7 +146,7 @@ class App(QWidget):
 
     def createLabel(self):
         self.label = QLabel()
-        self.label.setText("科创板转融通总量:" + str(int(self.kechuang)) + "万元")
+        self.label.setText("科创板转融券总量:" + str(int(self.kechuang)) + "万元")
 
 
 def lowCaseDfColumns(df: pd.DataFrame) -> pd.DataFrame:
@@ -206,19 +206,19 @@ def calMarginLoanParam(date: str, include688=False) -> dict:
             marginLoan.loc[label, "group"] = "中证500"  # "CSI"
     marginGroup = marginLoan.groupby("group").sum()
     marginGroup["balance_pct"] = marginGroup.endBalance / marginGroup.endBalance.sum()
-    marginSorted = marginLoan.sort_values(by="change")
+    marginSorted = marginLoan.sort_values(by="endBalance")
     marginGroup = marginGroup[["endBalance", "balance_pct", "change_balance"]]
     marginGroup.balance_pct *= 100
     marginGroup.loc["sum"] = [marginGroup.endBalance.sum(), marginGroup.balance_pct.sum(),
                               marginGroup.change_balance.sum()]
     marginGroup = dfItemToStr(marginGroup)
-    marginSorted = marginSorted[["endVol", "change", "group"]]
+    marginSorted = marginSorted[["endBalance", "change_balance", "group"]]
     marginGroup = marginGroup.iloc[[2, 0, 1, 3], :]
     stockName_df = getStockName()
     marginSorted = pd.merge(marginSorted, stockName_df, left_index=True, right_index=True)
     marginSorted["code"] = marginSorted.index
-    marginSorted.columns = ["endVol", "change", "group", "stockName", "code"]
-    marginSorted = marginSorted[["stockName", "code", "change", "endVol", "group"]]
+    marginSorted.columns = ["endBalance", "change_balance", "group", "stockName", "code"]
+    marginSorted = marginSorted[["stockName", "code", "change_balance", "endBalance", "group"]]
     marginSorted = dfItemToStr(marginSorted)
     param_dict = {"size": marginGroup, "change": marginSorted, "date": date, "688": loan688.endBalance.sum()}
     return param_dict
@@ -366,7 +366,7 @@ def first6Letters(s: str) -> str:
 
 
 if __name__ == '__main__':
-    param_dict = calMarginLoanParam("20190820")
+    param_dict = calMarginLoanParam("20190821")
     app = QApplication(sys.argv)
     myTable = App(param_dict)
     myTable.show()
