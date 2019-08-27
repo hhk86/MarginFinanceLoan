@@ -91,14 +91,14 @@ class App(QWidget):
         self.setLayout(self.layout)
         self.layout.setStretchFactor(self.VBoxGroup, 3)
 
-        self.layout2 = QHBoxLayout()
+        self.right_layout = QHBoxLayout()
         self.createSortTable()
-        self.layout2.addWidget(self.sortTable)
-        self.VBoxGroup.setLayout(self.layout2)
+        self.right_layout.addWidget(self.sortTable)
+        self.VBoxGroup.setLayout(self.right_layout)
 
         self.createSortTable2()
-        self.layout2.addWidget(self.sortTable2)
-        self.VBoxGroup.setLayout(self.layout2)
+        self.right_layout.addWidget(self.sortTable2)
+        self.VBoxGroup.setLayout(self.right_layout)
 
         self.show()
 

@@ -2,8 +2,6 @@ import cx_Oracle
 import numpy as np
 import pandas as pd
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import QRect
 import sys
 
 
@@ -70,13 +68,11 @@ class App(QWidget):
         self.left = 70
         self.top = 200
         self.width = 1300
-        self.height = 800
+        self.height = 600
         self.date = param_dict["date"]
         self.marginGroup = param_dict["size"]
         self.marginSorted = param_dict["change"]
-        self.marginHS300 = param_dict["HS300"]
-        self.marginCSI500 = param_dict["CSI500"]
-        self.title = '转融通分析'
+        self.title = '转融通分析' + "        日期：" + self.date
         self.kechuang = param_dict["688"]
         self.initUI()
 
@@ -84,36 +80,31 @@ class App(QWidget):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        self.layout = QHBoxLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
 
-        self.HGroup1 = QTableWidget()
-        self.layout.addWidget(self.HGroup1)
-        self.left_layout = QVBoxLayout()
-        self.HGroup1.setLayout(self.left_layout)
-        self.left_layout.addWidget(self.createTitle("                        转融券分析：" + self.date + "\n\n", fontsize=18))
-        self.left_layout.addWidget(self.createTitle("\t\t\t转融券分类统计"))
         self.createGroupTable()
-        self.left_layout.addWidget(self.groupTable)
-        self.left_layout.addWidget(self.createTitle("科创板转融券总量:" + str(int(self.kechuang)) + "万元\n", fontsize=11, bold=False))
-        self.left_layout.addWidget(self.createTitle("\t\t转融券期末余额排名（不包括科创板）"))
+        self.layout.addWidget(self.groupTable)
+
+
+        self.HGroup = QTableWidget()
+        self.layout.addWidget(self.HGroup)
+        self.right_layout = QHBoxLayout()
+        self.HGroup.setLayout(self.right_layout)
         self.createSortTable()
-        self.left_layout.addWidget(self.sortTable)
-        self.left_layout.setStretchFactor(self.sortTable, 1.5)
+        self.right_layout.addWidget(self.sortTable)
+        # self.createSortTable2()
+        # self.right_layout.addWidget(self.sortTable2)
 
 
 
-        self.HGroup2 = QTableWidget()
-        self.layout.addWidget(self.HGroup2)
-        self.right_layout = QVBoxLayout()
-        self.HGroup2.setLayout(self.right_layout)
-        self.right_layout.addWidget(self.createTitle("\t\t\t沪深300期末余额排名"))
-        self.createHS300Table()
-        self.right_layout.addWidget(self.HS300Table)
-        self.right_layout.addWidget(self.createTitle("\t\t\t中证500期末余额排名"))
-        self.createCSI500Table()
-        self.right_layout.addWidget(self.CSI500Table)
+        self.createLabel()
+        self.layout.addWidget(self.label)
+
+
+        self.layout.setStretchFactor(self.HGroup, 3)
+
 
         self.show()
 
@@ -122,13 +113,9 @@ class App(QWidget):
         self.groupTable.resize(400, 240)
         self.groupTable.setColumnCount(3)
         self.groupTable.setRowCount(4)
-        self.groupTable.setColumnWidth(0, 175)
-        self.groupTable.setColumnWidth(1, 175)
-        self.groupTable.setColumnWidth(2, 175)
-        self.groupTable.setRowHeight(0, 40)
-        self.groupTable.setRowHeight(1, 40)
-        self.groupTable.setRowHeight(2, 40)
-        self.groupTable.setRowHeight(3, 40)
+        self.groupTable.setColumnWidth(0, 380)
+        self.groupTable.setColumnWidth(1, 380)
+        self.groupTable.setColumnWidth(2, 380)
         for i in range(0, 4):
             for j in range(0, 3):
                 self.groupTable.setItem(i, j, QTableWidgetItem(self.marginGroup.iloc[i, j]))
@@ -142,8 +129,8 @@ class App(QWidget):
         self.sortTable.setColumnWidth(3, 110)
         for i in range(0, 10):
             for j in range(0, 5):
-                self.sortTable.setItem(i, j, QTableWidgetItem(self.marginSorted.iloc[i, j]))
-        self.sortTable.setHorizontalHeaderLabels(["股票名称", "股票代码", "变化量(万元)", "期末余额（万元）", "分类"])
+                self.sortTable.setItem(i, j, QTableWidgetItem(self.marginSorted.iloc[- i - 1, j]))
+        self.sortTable.setHorizontalHeaderLabels(["股票名称", "股票代码", "变化量(万元)", "期末余量（万元）", "分类"])
         self.sortTable.setVerticalHeaderLabels(["期末余量排名" + str(i) for i in range(1, 11)])
 
     def createSortTable2(self):
@@ -153,42 +140,13 @@ class App(QWidget):
         self.sortTable2.setColumnWidth(3, 110)
         for i in range(0, 10):
             for j in range(0, 5):
-                self.sortTable2.setItem(i, j, QTableWidgetItem(self.marginSorted.iloc[- i - 1, j]))
-        self.sortTable2.setHorizontalHeaderLabels(["股票名称", "股票代码", "变化量(万股)", "期末余额（万股）", "分类"])
+                self.sortTable2.setItem(i, j, QTableWidgetItem(self.marginSorted.iloc[i, j]))
+        self.sortTable2.setHorizontalHeaderLabels(["股票名称", "股票代码", "变化量(万股)", "期末余量（万股）", "分类"])
         self.sortTable2.setVerticalHeaderLabels(["变化量排名" + str(i) for i in range(1, 11)])
 
-    def createHS300Table(self):
-        self.HS300Table = QTableWidget()
-        self.HS300Table.setRowCount(10)
-        self.HS300Table.setColumnCount(5)
-        self.HS300Table.setColumnWidth(3, 110)
-        for i in range(0, 10):
-            for j in range(0, 5):
-                self.HS300Table.setItem(i, j, QTableWidgetItem(self.marginHS300.iloc[i, j]))
-        self.HS300Table.setHorizontalHeaderLabels(["股票名称", "股票代码", "变化量(万元)", "期末余额（万元）", "分类"])
-        self.HS300Table.setVerticalHeaderLabels(["期末余量排名" + str(i) for i in range(1, 11)])
-
-    def createCSI500Table(self):
-        self.CSI500Table = QTableWidget()
-        self.CSI500Table.setRowCount(10)
-        self.CSI500Table.setColumnCount(5)
-        self.CSI500Table.setColumnWidth(3, 110)
-        for i in range(0, 10):
-            for j in range(0, 5):
-                self.CSI500Table.setItem(i, j, QTableWidgetItem(self.marginCSI500.iloc[i, j]))
-        self.CSI500Table.setHorizontalHeaderLabels(["股票名称", "股票代码", "变化量(万元)", "期末余量（万元）", "分类"])
-        self.CSI500Table.setVerticalHeaderLabels(["期末余量排名" + str(i) for i in range(1, 11)])
-
-
-    def createTitle(self, t, fontsize=12, bold=True):
-        title = QLabel()
-        font = QFont()
-        font.setPointSize(fontsize)
-        font.setBold(bold)
-        title.setText(t)
-        title.setFont(font)
-        return title
-
+    def createLabel(self):
+        self.label = QLabel()
+        self.label.setText("科创板转融券总量:" + str(int(self.kechuang)) + "万元")
 
 
 def lowCaseDfColumns(df: pd.DataFrame) -> pd.DataFrame:
@@ -246,42 +204,23 @@ def calMarginLoanParam(date: str, include688=False) -> dict:
             marginLoan.loc[label, "group"] = "沪深300"  # "HS"
         if label in CSI_list:
             marginLoan.loc[label, "group"] = "中证500"  # "CSI"
-    stockName_df = getStockName()
-
     marginGroup = marginLoan.groupby("group").sum()
     marginGroup["balance_pct"] = marginGroup.endBalance / marginGroup.endBalance.sum()
+    marginSorted = marginLoan.sort_values(by="endBalance")
     marginGroup = marginGroup[["endBalance", "balance_pct", "change_balance"]]
     marginGroup.balance_pct *= 100
-    marginGroup.loc["sum"] = [marginGroup.endBalance.sum(), marginGroup.balance_pct.sum(), marginGroup.change_balance.sum()]
+    marginGroup.loc["sum"] = [marginGroup.endBalance.sum(), marginGroup.balance_pct.sum(),
+                              marginGroup.change_balance.sum()]
     marginGroup = dfItemToStr(marginGroup)
-    marginGroup = marginGroup.iloc[[2, 0, 1, 3], :]
-
-    marginSorted = marginLoan.sort_values(by="endBalance", ascending=False)
     marginSorted = marginSorted[["endBalance", "change_balance", "group"]]
+    marginGroup = marginGroup.iloc[[2, 0, 1, 3], :]
+    stockName_df = getStockName()
     marginSorted = pd.merge(marginSorted, stockName_df, left_index=True, right_index=True)
     marginSorted["code"] = marginSorted.index
     marginSorted.columns = ["endBalance", "change_balance", "group", "stockName", "code"]
     marginSorted = marginSorted[["stockName", "code", "change_balance", "endBalance", "group"]]
     marginSorted = dfItemToStr(marginSorted)
-
-    marginHS300 = marginLoan[marginLoan["group"] == "沪深300"].sort_values(by="endBalance", ascending=False)
-    marginHS300 = marginHS300[["endBalance", "change_balance", "group"]]
-    marginHS300 = pd.merge(marginHS300, stockName_df, left_index=True, right_index=True)
-    marginHS300["code"] = marginHS300.index
-    marginHS300.columns = ["endBalance", "change_balance", "group", "stockName", "code"]
-    marginHS300 = marginHS300[["stockName", "code", "change_balance", "endBalance", "group"]]
-    marginHS300 = dfItemToStr(marginHS300)
-
-    marginCSI500 = marginLoan[marginLoan["group"] == "中证500"].sort_values(by="endBalance", ascending=False)
-    marginCSI500 = marginCSI500[["endBalance", "change_balance", "group"]]
-    marginCSI500 = pd.merge(marginCSI500, stockName_df, left_index=True, right_index=True)
-    marginCSI500["code"] = marginCSI500.index
-    marginCSI500.columns = ["endBalance", "change_balance", "group", "stockName", "code"]
-    marginCSI500 = marginCSI500[["stockName", "code", "change_balance", "endBalance", "group"]]
-    marginCSI500 = dfItemToStr(marginCSI500)
-
-    param_dict = {"size": marginGroup, "change": marginSorted, "date": date, "688": loan688.endBalance.sum(),
-                  "HS300": marginHS300, "CSI500": marginCSI500}
+    param_dict = {"size": marginGroup, "change": marginSorted, "date": date, "688": loan688.endBalance.sum()}
     return param_dict
 
 
@@ -417,6 +356,7 @@ def mannuallyGetMarginLoan(date) -> pd.DataFrame:
     marginLoan = pd.merge(marginLoan, NameAndCode, on="code_short")
     marginLoan.set_index("S_INFO_WINDCODE", inplace=True)
     marginLoan["repay"] = marginLoan.endVol - marginLoan.endVol
+    # print(list(marginLoan.sell))
 
     return marginLoan
 
@@ -426,7 +366,7 @@ def first6Letters(s: str) -> str:
 
 
 if __name__ == '__main__':
-    param_dict = calMarginLoanParam("20190826")
+    param_dict = calMarginLoanParam("20190823")
     app = QApplication(sys.argv)
     myTable = App(param_dict)
     myTable.show()

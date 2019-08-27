@@ -90,12 +90,12 @@ class App(QWidget):
 
         self.HGroup = QTableWidget()
         self.layout.addWidget(self.HGroup)
-        self.layout2 = QHBoxLayout()
-        self.HGroup.setLayout(self.layout2)
+        self.right_layout = QHBoxLayout()
+        self.HGroup.setLayout(self.right_layout)
         self.createSortTable()
-        self.layout2.addWidget(self.sortTable)
+        self.right_layout.addWidget(self.sortTable)
         self.createSortTable2()
-        self.layout2.addWidget(self.sortTable2)
+        self.right_layout.addWidget(self.sortTable2)
 
 
 
