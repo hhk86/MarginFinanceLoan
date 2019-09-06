@@ -218,7 +218,7 @@ def calMarginLoanParam(date: str, include688=False) -> dict:
     '''
     tradingDay_list = getTradingDays("20120101", "20191231")
     date_lag1 = tradingDay_list[tradingDay_list.index(date) - 1]
-    print(date, date_lag1)
+    # print(date, date_lag1)
     marginLoan = getMarginLoan(date)
     marginLoan_lag1 = getMarginLoan(date_lag1)
     marginLoan = pd.merge(marginLoan, marginLoan_lag1, left_index=True, right_index=True, how="left")
@@ -279,8 +279,11 @@ def calMarginLoanParam(date: str, include688=False) -> dict:
     marginCSI500 = marginCSI500[["stockName", "code", "change_balance", "endBalance", "group"]]
     marginCSI500 = dfItemToStr(marginCSI500)
 
-    param_dict = {"size": marginGroup, "change": marginSorted, "date": date, "688": loan688.endBalance.sum(),
-                  "HS300": marginHS300, "CSI500": marginCSI500}
+    marginLoan["code"] = marginLoan.index
+    mainBoard = marginLoan[marginLoan["code"].apply(lambda s: s.startswith("60") or s.startswith("000"))]
+
+    param_dict = {"size": marginGroup, "change": marginSorted, "date": date, "688": round(loan688.endBalance.sum(), 2),
+                  "HS300": marginHS300, "CSI500": marginCSI500, "main": round(mainBoard.endBalance.sum(), 2)}
     marginLoan.to_csv("debug.csv")
     return param_dict
 
@@ -426,8 +429,11 @@ def first6Letters(s: str) -> str:
 
 
 if __name__ == '__main__':
-    param_dict = calMarginLoanParam("20190904")
-    app = QApplication(sys.argv)
-    myTable = App(param_dict)
-    myTable.show()
-    app.exit(app.exec_())
+    ls = getTradingDays("20190722", "20190904")
+    stat = pd.DataFrame(columns=["date", "mainBoard", "kechuang"])
+    for date in ls:
+        param_dict = calMarginLoanParam(date)
+        print(date, param_dict["main"], param_dict["688"])
+        stat = stat.append([[date, param_dict["main"], param_dict["688"]],])
+        stat.to_csv("stat.csv")
+
